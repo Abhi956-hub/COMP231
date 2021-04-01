@@ -41,7 +41,7 @@ namespace ReminderToDo
             ddlStatus.SelectedIndex = -1;
             ddlStatus.Items.FindByValue("Pending").Selected = true;
         }
-        protected void LoadTasks()
+        protected void LoadTasks(string SortExpression=null, string sortingDirection=null)
         {
             Task task = new Task();
             TaskDL objTaskDL = new TaskDL();
@@ -58,8 +58,12 @@ namespace ReminderToDo
 
             task.ActionStatus = ddlSearchStatus.SelectedValue;
 
-            objResponse.SortBy = "EntryDate";
-            objResponse.SortOrder = "Asc";
+            if (SortExpression == null)
+                SortExpression = "EntryDate";
+            if (sortingDirection == null)
+                sortingDirection = "Asc";
+            objResponse.SortBy = SortExpression;// "EntryDate";
+            objResponse.SortOrder = sortingDirection;//"Asc";
 
 
             objResponse.IsDebugMode = false;
@@ -182,51 +186,93 @@ namespace ReminderToDo
         }
         protected void gvTask_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            btnReset_Click(sender, e);
-
-            Task task = new Task();
-            TaskDL objTaskDL = new TaskDL();
-            ProcessResponse objResponse = new ProcessResponse();
-
-            task.ActionId = Convert.ToInt64(e.CommandArgument);
-            hdActionId.Value = Convert.ToString(task.ActionId);
-
-            if (e.CommandName == "EditTask")
+          //  var current = gvTask.CurrentRow;
+            if ( (e.CommandName.ToLower() !="sort")) // Means that you've not clicked the column header
             {
-                objResponse.Command = "Select";
-                task = objTaskDL.GetTask(objResponse, task);
+                btnReset_Click(sender, e);
 
+                Task task = new Task();
+                TaskDL objTaskDL = new TaskDL();
+                ProcessResponse objResponse = new ProcessResponse();
 
-                if (task != null)
+                task.ActionId = Convert.ToInt64(e.CommandArgument);
+                hdActionId.Value = Convert.ToString(task.ActionId);
+
+                if (e.CommandName == "EditTask")
                 {
-                    action.Focus();
-                    action.Value = task.Action;
-                    remarks.Value = task.Remarks;
-                    date.Value = task.ToDoDateTime.ToShortDateString();
-                    time.Value = task.ToDoDateTime.ToShortTimeString();
-                    ddlStatus.SelectedIndex = -1;
-                    ddlStatus.Items.FindByValue(task.ActionStatus).Selected = true;
+                    objResponse.Command = "Select";
+                    task = objTaskDL.GetTask(objResponse, task);
+
+
+                    if (task != null)
+                    {
+                        action.Focus();
+                        action.Value = task.Action;
+                        remarks.Value = task.Remarks;
+                        date.Value = task.ToDoDateTime.ToShortDateString();
+                        time.Value = task.ToDoDateTime.ToShortTimeString();
+                        ddlStatus.SelectedIndex = -1;
+                        ddlStatus.Items.FindByValue(task.ActionStatus).Selected = true;
+                    }
+
                 }
 
-            }
+                else if (e.CommandName == "DeleteTask")
+                {
 
-            else if (e.CommandName == "DeleteTask")
+
+                    objResponse.Command = "Delete";
+
+                    objResponse = objTaskDL.DeleteTask(objResponse, task);
+
+                    msg.InnerText = objResponse.CustomMessage;
+                    msg.Attributes.Add("class", (objResponse.IsSuccess ? "alert alert-success" : "alert alert-danger"));
+                }
+
+                LoadTasks();
+            }
+        }
+
+        protected void gvTask_Sorting(object sender, GridViewSortEventArgs e)
+        {
+            string sortingDirection = string.Empty;
+            if (direction == SortDirection.Ascending)
             {
-                msg.InnerText = "Some error occur in deleting data";
-                msg.Attributes.Add("class", ( "alert alert-danger"));
+                direction = SortDirection.Descending;
+                sortingDirection = "Desc";
 
-                //objResponse.Command = "Delete";
 
-                //objResponse = objTaskDL.DeleteTask(objResponse, task);
-
-                //msg.InnerText = objResponse.CustomMessage;
-                //msg.Attributes.Add("class", (objResponse.IsSuccess ? "alert alert-success" : "alert alert-danger"));
             }
+            else
+            {
+                direction = SortDirection.Ascending;
+                sortingDirection = "Asc";
 
-            LoadTasks();
+            }
+            //DataView sortedView = new DataView(LoadTasks());
+            //sortedView.Sort = e.SortExpression + " " + sortingDirection;
+            //Session["SortedView"] = sortedView;
+            //gvTask.DataSource = sortedView;
+            //gvTask.DataBind();
+            LoadTasks(e.SortExpression, sortingDirection);
+        } 
+        public SortDirection direction
+    {
+        get
+        {
+            if (ViewState["directionState"] == null)
+            {
+                ViewState["directionState"] = SortDirection.Ascending;
+            }
+            return (SortDirection)ViewState["directionState"];
+        }
+        set
+        {
+            ViewState["directionState"] = value;
         }
     }
-
+    }
+  
     internal class Task
     {
         private Int64 _ActionId;
