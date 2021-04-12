@@ -12,7 +12,14 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-   
+   <style>
+       #msg{
+           position:fixed;
+           right:5px;
+           bottom:5px;
+           min-width:350px;
+       }
+   </style>
 </head>
 <body>
     <form id="form1" runat="server">
